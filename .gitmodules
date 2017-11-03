@@ -1,0 +1,6 @@
+[submodule "s-sparql"]
+	path = s-sparql
+	url = https://github.com/nathanielrb/s-sparql.git
+[submodule "mu-chicken-support"]
+	path = mu-chicken-support
+	url = https://github.com/nathanielrb/mu-chicken-support.git

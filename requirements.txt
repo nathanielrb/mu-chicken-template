@@ -1,0 +1,17 @@
+medea 
+matchable
+irregex
+spiffy
+typeclass
+lexgen
+input-classes
+abnf
+http-client
+uri-common
+intarweb
+fmt 
+symbol-utils
+apropos
+chicken-doc
+slime
+cjson
