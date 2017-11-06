@@ -1,6 +1,6 @@
 # Chicken Scheme Template
 
-Template for running Chicken Scheme microservices.
+Template for running [Chicken Scheme](http://wiki.call-cc.org/man/4/The%20User%27s%20Manual) microservices.
 
 ## Configuration
 
@@ -74,14 +74,13 @@ You can use the Chicken `slime` module ([github](https://github.com/nickg/swank-
 
 The template makes available by default the following Chicken modules:
 
-- [spiffy](http://wiki.call-cc.org/eggref/4/spiffy): web server (used for the REST handlers below, but occasionally necessary for lower-level work; see also spiffy-request-vars, http-utils, and intarweb)
-- [medea](http://wiki.call-cc.org/eggref/4/medea): JSON parsing and writing (note that inside the template, the faster cjson is used for parsing the potentially larger json objects)
+- [spiffy](http://wiki.call-cc.org/eggref/4/spiffy): web server library, used for defining the REST handlers described below below. See also [spiffy-request-vars](https://wiki.call-cc.org/eggref/4/spiffy-request-vars) for accessing request paramaters, and [http-client](http://wiki.call-cc.org/eggref/4/http-client) and [intarweb](http://wiki.call-cc.org/eggref/4/intarweb) for lower-level control over http requests.
+- [medea](http://wiki.call-cc.org/eggref/4/medea): JSON parsing and writing. When performance is important, the faster [cjson](http://wiki.call-cc.org/eggref/4/cjson) is also used for parsing large JSON objects.
 - [matchable](http://wiki.call-cc.org/eggref/4/matchable): pattern matching
-- uuids (to be added)
 
 The experimental module [s-sparql](https://github.com/nathanielrb/s-sparql) for parsing and transforming SPARQL queries is available but not loaded by default.
 
-### From mu-chicken-support
+### Helpers
 
 Test if we're inside Docker:
 
@@ -96,6 +95,16 @@ Generate a uuid:
 ;; => "5509b40b-0e0e-468e-b87a-2768b51e24ea"
 ```
 
+Message logging, using format strings:
+
+```
+(log-message "Error: ~A~%" error-msg)
+```
+
+There are also utility functions for creating JSON-API and JSON-LD objects.
+
+### Defining REST calls
+
 REST calls are functions of one parameter (an alist representing path variable bindings) and must return a Scheme representation of a JSON object parseable by [medea](http://wiki.call-cc.org/eggref/4/medea). They can be defined directly, or using the `rest-call` macro, and are registered with `define-rest-call`:
 
 ```
@@ -109,7 +118,6 @@ REST calls are functions of one parameter (an alist representing path variable b
     `((message . ,(conc "Goodbye, " name)))))
 
 (define-rest-call 'DELETE ('"person" name) bye-call)
-
 ```
 
 Use the `mu-headers` dynamic parameter to send custom headers:
@@ -121,30 +129,24 @@ Use the `mu-headers` dynamic parameter to send custom headers:
      `((message . ,(conc "Goodbye, " name))))))
 ```
 
-Request body can be parsed as a string or JSON object using `read-request-body` and `read-request-json`:
+The request body can be parsed as a string or JSON object using `read-request-body` and `read-request-json`, and headers accessed using `header`. Request parameters can be accessed using procedures defined by the [spiffy-request-vars](https://wiki.call-cc.org/eggref/4/spiffy-request-vars) module. Custom error messages can be sent in JSON-API format using the function `send-error`:
 
 ```
-(read-request-json)
-;; => '((data . ((type . "person") (attributes . ((name . "John"))))))
-```
+(use spiffy-request-vars)
 
-Custom error messages can be sent in JSON-API format using the function `send-error`:
-
+(define-rest-call 'PATCH '("person" id)
+  (rest-call (id)
+    (let (($query (request-vars source: 'query-string))
+          (body (read-request-json)))     ; => '((data . ((type . "person") (attributes . ((name . "John Edwards") ...)))))
+      (if (or (equal? ($query 'lang) "en")
+              (equal? (header 'language) "en"))
+          (update-person id body)
+          (send-error 400 "Language Error" "Language not specified or not supported.")))))
 ```
-(send-error 500 "Error Title" "Error detail")
-```
-
-Message logging, using format strings:
-
-```
-(log-message "Error: ~A~%" error-msg)
-```
-
-There are also utility functions for creating JSON-API and JSON-LD objects.
 
 ### Querying SPARQL Endpoints
 
-The [sparql-query](https://github.com/nathanielrb/chicken-sparql-query) module provides functions for managing namespaces and querying SPARQL endpoints.
+The provided [sparql-query](https://github.com/nathanielrb/s-sparql/blob/master/sparql-query.scm) module (part of s-sparql) provides functions for managing namespaces and querying SPARQL endpoints.
 
 #### Escaping SPARQL Values
 
