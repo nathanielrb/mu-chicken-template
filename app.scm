@@ -2,9 +2,9 @@
 
 (use spiffy slime sparql-query mu-chicken-support)
 
-(load "/app/app.scm")
+(include "/app/app.scm")
 
-(vhost-map `((".*" . ,handle-app) ))
+(vhost-map `((".*" . ,handle-app)))
 
 (define swank
   (thread-start!

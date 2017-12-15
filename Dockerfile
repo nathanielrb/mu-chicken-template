@@ -1,6 +1,7 @@
 FROM nathanielrb/chicken
 MAINTAINER "nathaniel.rudavsky@gmail.com"
 
+ENV DEBUG false
 ENV MU_SPARQL_ENDPOINT "http://database:8890/sparql"
 ENV MU_DEFAULT_GRAPH "http://mu.semte.ch/application"
 ENV DEFAULT_LANG "en"
@@ -24,10 +25,17 @@ ONBUILD RUN cd /usr/src/app && \
 
 ONBUILD ADD . /app
 
-ONBUILD RUN if [ -f /app/requirements.txt ]; then echo "Installing eggs..."; cat /app/requirements.txt | xargs chicken-install; fi
+ONBUILD RUN if [ -f /app/requirements.txt ]; then \
+              echo "Installing eggs..." && \
+              cat /app/requirements.txt | xargs chicken-install;\
+            fi
+
+ONBUILD RUN  echo "Compiling app.scm" && \
+             cd /usr/src/app && \
+             csc -include-path /app app.scm
 
 EXPOSE 80
 EXPOSE 4028
 
-CMD echo "Starting Chicken Scheme microservice"; csi -q /usr/src/app/app.scm
-
+CMD cd /usr/src/app && \
+    ./entrypoint.sh

@@ -13,6 +13,7 @@ The template supports the following environment variables, from the modules `mu-
 - `SWANK_PORT`: port for running the swank server, defaults to 4005.
 - `MESSAGE_LOGGING`: turns logging on or off.
 - `PRINT_SPARQL_QUERIES`: when "true", print all SPARQL queries.
+- `DEBUG`: when "true", runs interpreted code
 
 ## Usage
 
@@ -60,6 +61,10 @@ services:
       - "4005:4005"
     environment:
       MU_DEFAULT_GRAPH: "http://example.com/application"
+      DEBUG: "true"
+    volumes:
+      - /path/to/source:/app  # for easy DEBUG reloading
+
 ```
 
 ### Swank
